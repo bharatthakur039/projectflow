@@ -110,7 +110,7 @@ export default function ImportProjectModal({ isOpen, onClose, projectId, onSucce
         );
         onSuccess?.();
         handleClose();
-        router.push(`/projects/${res.project.id}/board`);
+        router.push("/projects");
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to import project file.";

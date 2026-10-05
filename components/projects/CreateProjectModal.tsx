@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAppDispatch } from "@/store";
 import { addToast } from "@/store/uiSlice";
 import { projectsApi } from "@/services/api";
@@ -18,7 +17,6 @@ interface Props {
 
 export default function CreateProjectModal({ isOpen, onClose, onCreated }: Props) {
   const dispatch = useAppDispatch();
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -51,7 +49,6 @@ export default function CreateProjectModal({ isOpen, onClose, onCreated }: Props
       onCreated?.(project);
       handleClose();
       dispatch(addToast({ type: "success", message: `Project "${project.name}" created successfully!` }));
-      router.push(`/projects/${project.id}/board`);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Failed to create project.";
       setNameError(message);

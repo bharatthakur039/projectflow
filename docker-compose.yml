@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  # ---------------------------------------------
+  # 1. PostgreSQL Database Service
+  # ---------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: projectflow-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: developer
+      POSTGRES_PASSWORD: developer
+      POSTGRES_DB: projectflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U developer -d projectflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------
+  # 2. Next.js Fullstack Application
+  # ---------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: /api/v1
+    container_name: projectflow-app
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://developer:developer@postgres:5432/projectflow?schema=public
+      JWT_SECRET: super_secure_projectflow_jwt_secret_key_12345
+      JWT_EXPIRES_IN: 7d
+      FRONTEND_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - app_uploads:/app/public/uploads
+
+volumes:
+  postgres_data:
+    driver: local
+  app_uploads:
+    driver: local

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { addToast } from "@/store/uiSlice";
 import { ticketsApi, membersApi, sprintsApi, projectsApi } from "@/services/api";
@@ -21,6 +21,7 @@ interface ExtendedTicket extends Ticket {
 
 export default function BacklogPage() {
   const { projectId } = useParams<{ projectId: string }>();
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const user = useAppSelector((s) => s.auth.user);
   const pid = parseInt(projectId);
@@ -420,7 +421,8 @@ export default function BacklogPage() {
         onClose={() => setCreateSprintOpen(false)}
         onCreated={(sprint) => {
           setSprints((prev) => [...prev, sprint]);
-          loadData();
+          setCreateSprintOpen(false);
+          router.push(`/projects/${pid}/sprints`);
         }}
         projectId={pid}
       />
