@@ -91,11 +91,11 @@ export default function BacklogPage() {
 
           const status = getSprintStatus(sprint, now);
           
-          // Active sprint tickets appear only on the Board, not in Backlog
-          if (status === "ACTIVE") return false;
-          
-          // Tickets from a future/planned sprint, or incomplete tickets from an expired sprint show in Backlog
-          return true;
+          // Incomplete tickets from an expired sprint roll over into Backlog
+          if (status === "EXPIRED") return true;
+
+          // Tickets assigned to an active or planned sprint belong to that sprint, NOT in the backlog
+          return false;
         })
         .map((ticket) => {
           let sprintName: string | undefined;
@@ -156,7 +156,7 @@ export default function BacklogPage() {
   });
 
   const expiredTickets = filteredTickets.filter((t) => t.isExpired);
-  const unassignedTickets = filteredTickets.filter((t) => !t.isExpired);
+  const unassignedTickets = filteredTickets.filter((t) => !t.sprint_id);
 
   if (loading) return <BacklogSkeleton />;
 
@@ -403,13 +403,13 @@ export default function BacklogPage() {
           ticket={selectedTicket}
           isOpen={true}
           onClose={() => setSelectedTicket(null)}
-          onUpdated={(updated) => {
-            setTickets((prev) => prev.map((t) => (t.id === updated.id ? { ...t, ...updated } : t)));
+          onUpdated={(_updated) => {
             setSelectedTicket(null);
+            loadData();
           }}
-          onDeleted={(id) => {
-            setTickets((prev) => prev.filter((t) => t.id !== id));
+          onDeleted={(_id) => {
             setSelectedTicket(null);
+            loadData();
           }}
           projectOwnerId={projectOwnerId}
           projectPrefix={projectPrefix}
