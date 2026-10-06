@@ -627,7 +627,17 @@ export const projectExcelService = {
       }
 
       // Sheet 3: Tickets (Process and insert in chunks)
-      const ticketSheet = workbook.getWorksheet("Tickets");
+      const ticketSheet =
+        workbook.getWorksheet("Tickets") ||
+        workbook.worksheets.find((w) => w.name.toLowerCase().includes("ticket")) ||
+        workbook.worksheets.find((w) => {
+          let hasTitle = false;
+          w.getRow(1).eachCell((c) => {
+            if (String(c.value || "").toLowerCase().includes("title")) hasTitle = true;
+          });
+          return hasTitle;
+        }) ||
+        (workbook.worksheets.length === 1 ? workbook.worksheets[0] : null);
       let ticketsCount = 0;
 
       if (ticketSheet) {
