@@ -169,7 +169,7 @@ export default function BoardPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [sprints, setSprints] = useState<Sprint[]>([]);
-  // Start with the URL param if present, otherwise will be resolved to active sprint after load
+  // Default to URL param if provided, otherwise default to "ALL" sprints
   const [selectedSprintId, setSelectedSprintId] = useState<number | "ALL">(
     sprintIdParam ? parseInt(sprintIdParam) : "ALL"
   );
@@ -218,19 +218,11 @@ export default function BoardPage() {
       }
       setSprints(visibleSprints);
 
-      // If no explicit filter chosen (ALL and no URL param), auto-select the active sprint
-      let effectiveFilter = sprintFilterId;
-      if (effectiveFilter === "ALL" && !sprintIdParam) {
-        const activeSprint = visibleSprints.find((s) => getDynamicStatus(s) === "ACTIVE");
-        if (activeSprint) {
-          effectiveFilter = activeSprint.id;
-          setSelectedSprintId(activeSprint.id);
-        }
-      }
+      const effectiveFilter = sprintFilterId;
 
       const filter: Record<string, unknown> = effectiveFilter !== "ALL"
-        ? { sprintId: effectiveFilter as number, limit: 100 }
-        : { limit: 100 };
+        ? { sprintId: effectiveFilter as number, limit: 200 }
+        : { limit: 200 };
 
       const t = await ticketsApi.listByProject(pid, filter as Parameters<typeof ticketsApi.listByProject>[1]);
       // Never show backlog tickets (sprint_id = null) on the board
@@ -508,12 +500,18 @@ export default function BoardPage() {
           isOpen={createTicketOpen}
           onClose={() => setCreateTicketOpen(false)}
           onCreated={(t) => {
-            setTickets((prev) => [...prev, t]);
+            if (selectedSprintId === "ALL" || t.sprint_id === selectedSprintId) {
+              setTickets((prev) => [...prev, t]);
+            }
           }}
           projectId={pid}
           members={members}
           sprints={sprints}
-          defaultSprintId={typeof selectedSprintId === "number" ? selectedSprintId : sprints[0]?.id}
+          defaultSprintId={
+            typeof selectedSprintId === "number"
+              ? selectedSprintId
+              : (sprints.find((s) => getDynamicStatus(s) === "ACTIVE")?.id ?? sprints[0]?.id)
+          }
           onRequestCreateSprint={() => setCreateTicketOpen(true)}
         />
       )}
