@@ -1,19 +1,41 @@
 # ProjectFlow
 
-Agile project and sprint management application built with Next.js 16, Prisma ORM, and PostgreSQL.
+### 🎯 Project Overview & Objective
+**ProjectFlow** is a modern, fullstack Agile project and sprint management platform designed to streamline team collaboration. It enables software teams to manage product backlogs, plan sprint cycles, track work items visually on an interactive drag-and-drop Kanban board, and handle role-based user workflows with automated reporting.
+
+---
+
+### 🛠️ Tech Stack
+- **Frontend:** Next.js 16 (App Router), React 19, Tailwind CSS v4, Redux Toolkit, `@dnd-kit` (Kanban drag-and-drop), TipTap (rich text editor)
+- **Backend & APIs:** Next.js Route Handlers (`/api/v1/...`), Argon2 (password hashing), JWT authentication, Nodemailer, ExcelJS
+- **Database & ORM:** PostgreSQL 16, Prisma ORM v5
+- **DevOps & Containerization:** Docker (Multi-stage build), Docker Compose, GitHub Actions (CI/CD)
 
 ---
 
 ## 📋 Prerequisites
 
-Ensure the following tools are installed on the production/VPS server:
+Ensure the following tools are installed on your server or local machine:
 - **Docker** (v20+)
 - **Docker Compose** (v2+)
 - **Git**
 
 ---
 
-## 🚀 Manual Server Deployment (Docker)
+## ⚙️ Environment Configuration
+
+1. Copy the example environment file:
+   ```bash
+   cp .env.example .env.production
+   ```
+2. Open `.env.production` and verify/update:
+   - `DATABASE_URL`: Your PostgreSQL connection string (Docker local or managed cloud like Render)
+   - `JWT_SECRET`: A secure random secret string for authentication tokens
+   - `FRONTEND_URL`: Public domain or server IP (e.g., `https://your-domain.com` or `http://localhost:3000`)
+
+---
+
+## 🚀 Server Deployment (Docker)
 
 Run the following commands on the **VPS Server Terminal**:
 
@@ -23,17 +45,23 @@ git clone <repo-url>
 cd "ProjectFlow Project"
 ```
 
-### 2. Build and start containers
+### 2. Configure environment file
+```bash
+cp .env.example .env.production
+# Edit .env.production with your database and domain credentials
+```
+
+### 3. Build and launch containers
 ```bash
 docker compose up -d --build
 ```
 
-### 3. Run database migrations
+### 4. Run database migrations
 ```bash
 docker compose exec app npx prisma migrate deploy
 ```
 
-### 4. (Optional) Seed initial demo data
+### 5. (Optional) Seed initial demo & admin data
 ```bash
 docker compose exec app npm run prisma:seed
 ```
@@ -44,7 +72,7 @@ The application will be live at: **`http://<server-ip>:3000`**
 
 ## 🛠️ Server Management Commands
 
-Run these commands inside the **VPS Server Terminal** to monitor and manage services:
+Run these commands inside the server terminal to monitor and manage services:
 
 ```bash
 # View live application & database logs
@@ -64,54 +92,32 @@ docker compose down
 
 ## 🧪 CI (Continuous Integration)
 
-- **Execution Environment:** **GitHub Cloud Runner** (Runs free on GitHub's infrastructure, not on your VPS).
-- **Trigger Event:** Triggered automatically on any **Pull Request** or **Push** to the `main` branch.
+- **Execution Environment:** **GitHub Cloud Runner** (isolated cloud runner on GitHub).
+- **Trigger Event:** Automatically triggered on every **Pull Request** and **Push** to the `main` branch.
 - **Workflow File:** [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 
-### Commands executed during CI (in GitHub Actions runner):
-```bash
-# 1. Typecheck TypeScript codebase for errors
-npx tsc --noEmit
-
-# 2. Compile and verify Next.js production build
-npm run build
-
-# 3. Validate multi-stage Docker image build
-docker build --build-arg NEXT_PUBLIC_API_URL=/api/v1 -t projectflow-app:latest .
-```
-> **Goal:** Prevents broken code, type errors, or faulty Dockerfiles from reaching production.
+### Automated Checks:
+1. **TypeScript Typecheck:** `npx tsc --noEmit` (validates code against type errors)
+2. **Next.js Production Build:** `npm run build` (verifies full app compilation)
+3. **Docker Build Validation:** Builds and tests the multi-stage Docker image to guarantee production readiness
 
 ---
 
 ## 🚀 CD (Continuous Deployment / Auto-Deploy)
 
-- **Execution Environment:** **Customer's VPS Server** (GitHub Actions connects via secure SSH and executes remote commands).
-- **Trigger Event:** Runs automatically on push/merge to the `main` branch **only after** all CI checks pass.
+- **Execution Environment:** **Target Production/VPS Server** via SSH.
+- **Trigger Event:** Automatically triggered on push/merge to `main` **only after** all CI checks pass.
 - **Workflow File:** [`.github/workflows/ci.yml`](.github/workflows/ci.yml)
 
-### Commands executed during CD (on the VPS Server via SSH):
-```bash
-# 1. Navigate to the project directory on the server
-cd ~/ProjectFlow
+### Automated Deployment Steps:
+1. Connects to the VPS server over SSH
+2. Pulls the latest changes from GitHub (`git pull origin main`)
+3. Rebuilds and launches updated containers (`docker compose up -d --build`)
+4. Runs pending database migrations (`docker compose exec -T app npx prisma migrate deploy`)
+5. Prunes old unused Docker images to conserve server storage (`docker image prune -f`)
 
-# 2. Pull the latest approved changes from GitHub
-git pull origin main
-
-# 3. Rebuild and launch updated containers in background
-docker compose up -d --build
-
-# 4. Apply new database migrations
-docker compose exec -T app npx prisma migrate deploy
-
-# 5. Clean up old unused Docker images to save disk space
-docker image prune -f
-```
-
----
-
-## 🔑 CD Setup (Required GitHub Secrets)
-
-To enable automated deployment, add these 4 secrets in **GitHub Repo > Settings > Secrets and variables > Actions**:
+### Required GitHub Secrets for CD:
+Add these in **GitHub Repo > Settings > Secrets and variables > Actions**:
 
 | Secret Name | Description | Example |
 | :--- | :--- | :--- |
