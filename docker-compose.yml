@@ -33,13 +33,15 @@ services:
         NEXT_PUBLIC_API_URL: /api/v1
     container_name: projectflow-app
     restart: unless-stopped
+    env_file:
+      - .env.production
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: postgresql://developer:developer@postgres:5432/projectflow?schema=public
-      JWT_SECRET: super_secure_projectflow_jwt_secret_key_12345
-      JWT_EXPIRES_IN: 7d
-      FRONTEND_URL: http://localhost:3000
+      DATABASE_URL: ${DATABASE_URL:-postgresql://developer:developer@postgres:5432/projectflow?schema=public}
+      JWT_SECRET: ${JWT_SECRET:-super_secure_projectflow_jwt_secret_key_12345}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     ports:
       - "3000:3000"
     depends_on:
